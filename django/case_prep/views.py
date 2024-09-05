@@ -424,21 +424,21 @@ def toggle_document_visibility(request):
     access_key = AccessKey(request.user)
 
     if request.method == "POST":
-        # data = json.loads(request.body)
-        # document_id = data["document_id"]
-        # document = Document.objects.get(access_key, pk=document_id)
-        # document.hidden = not document.hidden
-        # document.save(access_key)
+        data = json.loads(request.body)
+        document_id = data["document_id"]
+        document = Document.objects.get(access_key, pk=document_id)
+        document.hidden = not document.hidden
+        document.save(access_key)
 
-        documents = get_selected_docs(request)
+        # documents = get_selected_docs(request)
 
-        for document in documents:
-            document.hidden = not document.hidden
-            document.save(access_key)
+        # for document in documents:
+        #     document.hidden = not document.hidden
+        #     document.save(access_key)
 
         return JsonResponse({"message": "Document visibility toggled successfully."})
 
-    return JsonResponse({"error": "Invalid request method."}, status=400)
+    # return JsonResponse({"error": "Invalid request method."}, status=400)
 
 
 def create_table_of_contents(request):
