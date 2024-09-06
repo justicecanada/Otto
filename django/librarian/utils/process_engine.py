@@ -70,6 +70,9 @@ def create_nodes(chunks, document):
         metadata["title"] = document.title
     if document.url or document.filename:
         metadata["source"] = document.url or document.filename
+        if document.filename:
+            metadata["start_page"] = 0
+            metadata["end_page"] = 0
     document_node = TextNode(text="", id_=document_uuid, metadata=metadata)
     document_node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
         node_id=document_node.node_id
@@ -271,7 +274,7 @@ def document_title(content):
     return title
 
 
-def create_child_nodes(text_strings, source_node_id, metadata=None):
+def create_child_nodes(text_strings, source_node_id, metadata=None):  #metadata start and end pagenumbers to be stored properly when chunking
     from llama_index.core.node_parser import SentenceSplitter
     from llama_index.core.schema import NodeRelationship, RelatedNodeInfo, TextNode
 
