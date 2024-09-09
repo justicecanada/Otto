@@ -180,13 +180,18 @@ def fast_pdf_to_text(content, chunk_size=768):
 
     pdf = fitz.open(stream=io.BytesIO(content))
     text = ""
+    page_texts = []
     for page_number in range(pdf.page_count):
         page = pdf.load_page(page_number)
-        text += page.get_text("text")
+        page_text = page.get_text("text")  # new
+        text += (
+            f"\n\n--- Page {page_number + 1} ---\n\n" + page_text
+        )  # text += page.get_text("text")
+        page_texts.append(page_text)
     pdf.close()
 
     # We don't split the text into chunks here because it's done in create_child_nodes()
-    return text, [text]
+    return text, page_texts  # [text]
 
 
 def html_to_markdown(content, chunk_size=768, base_url=None, selector=None):
@@ -274,7 +279,9 @@ def document_title(content):
     return title
 
 
-def create_child_nodes(text_strings, source_node_id, metadata=None):  #metadata start and end pagenumbers to be stored properly when chunking
+def create_child_nodes(
+    text_strings, source_node_id, metadata=None
+):  # metadata start and end pagenumbers to be stored properly when chunking
     from llama_index.core.node_parser import SentenceSplitter
     from llama_index.core.schema import NodeRelationship, RelatedNodeInfo, TextNode
 
@@ -287,33 +294,52 @@ def create_child_nodes(text_strings, source_node_id, metadata=None):  #metadata 
     # Create TextNode objects
     nodes = []
     split_texts = []
-    for i, text in enumerate(text_strings):
-        split_texts += [close_tags(t) for t in splitter.split_text(text)]
+    # for i, text in enumerate(text_strings):
+    #     split_texts += [close_tags(t) for t in splitter.split_text(text)]
+    for text, page_number in text_strings:  # new
+        split_texts += [(close_tags(t), page_number) for t in splitter.split_text(text)]
 
     # Now all the chunks are at most 768 tokens long, but many are much shorter
     # We want to make them a uniform size, so we'll stuff them into the previous chunk
     # (making sure the previous chunk doesn't exceed 768 tokens)
     stuffed_texts = []
     current_text = ""
-    for text in split_texts:
+    # for text in split_texts:
+    #     if token_count(f"{current_text} {text}") > 768:
+    #         stuffed_texts.append(current_text)
+    #         current_text = text
+    #     else:
+    #         current_text += " " + text
+    current_page_number = None  # new
+    for text, page_number in split_texts:
         if token_count(f"{current_text} {text}") > 768:
-            stuffed_texts.append(current_text)
+            stuffed_texts.append((current_text, current_page_number))
             current_text = text
+            current_page_number = page_number
         else:
             current_text += " " + text
-
+            current_page_number = page_number
     # Append the last stuffed text if it's not empty
     if current_text:
-        stuffed_texts.append(current_text)
+        # stuffed_texts.append(current_text)
+        stuffed_texts.append((current_text, current_page_number))  # new
 
-    for text in stuffed_texts:
+    # for text in stuffed_texts:
+    #     node = TextNode(text=text, id_=str(uuid.uuid4()))
+    #     node.metadata = metadata
+    #     node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
+    #         node_id=source_node_id
+    #     )
+    #     nodes.append(node)
+    for text, page_number in stuffed_texts:  # new
         node = TextNode(text=text, id_=str(uuid.uuid4()))
-        node.metadata = metadata
+        node.metadata = metadata.copy() if metadata else {}
+        node.metadata["start_page"] = page_number
+        node.metadata["end_page"] = page_number
         node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
             node_id=source_node_id
         )
         nodes.append(node)
-
     # Handle the case when there's only one or zero elements
     if len(text_strings) < 2:
         return nodes
