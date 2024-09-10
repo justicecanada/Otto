@@ -70,9 +70,6 @@ def create_nodes(chunks, document):
         metadata["title"] = document.title
     if document.url or document.filename:
         metadata["source"] = document.url or document.filename
-        if document.filename:
-            metadata["start_page"] = 0
-            metadata["end_page"] = 0
     document_node = TextNode(text="", id_=document_uuid, metadata=metadata)
     document_node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
         node_id=document_node.node_id
@@ -183,15 +180,14 @@ def fast_pdf_to_text(content, chunk_size=768):
     page_texts = []
     for page_number in range(pdf.page_count):
         page = pdf.load_page(page_number)
-        page_text = page.get_text("text")  # new
-        text += (
-            f"\n\n--- Page {page_number + 1} ---\n\n" + page_text
-        )  # text += page.get_text("text")
-        page_texts.append(page_text)
+        # text += page.get_text("text")
+        page_text = page.get_text("text")
+        page_texts.append((page_text, page_number + 1))
+
     pdf.close()
 
     # We don't split the text into chunks here because it's done in create_child_nodes()
-    return text, page_texts  # [text]
+    return page_texts  # text, [text]
 
 
 def html_to_markdown(content, chunk_size=768, base_url=None, selector=None):
@@ -211,7 +207,9 @@ def docx_to_markdown(content, chunk_size=768):
         result = mammoth.convert_to_html(docx_file)
     html = result.value
     md, nodes = _convert_html_to_markdown(html, chunk_size)
-    return md, nodes
+
+    page_texts = [(node, idx + 1) for idx, node in enumerate(nodes)]
+    return md, page_texts  # return md, nodes
 
 
 def pptx_to_markdown(content, chunk_size=768):
@@ -334,8 +332,7 @@ def create_child_nodes(
     for text, page_number in stuffed_texts:  # new
         node = TextNode(text=text, id_=str(uuid.uuid4()))
         node.metadata = metadata.copy() if metadata else {}
-        node.metadata["start_page"] = page_number
-        node.metadata["end_page"] = page_number
+        node.metadata["page_number"] = page_number  # new: Add page number to metadata
         node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
             node_id=source_node_id
         )

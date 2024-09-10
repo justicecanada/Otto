@@ -380,16 +380,40 @@ def qa_response(chat, response_message, eval=False):
 
     response = synthesizer.synthesize(query=input, nodes=source_nodes)
 
+    # new : Include page numbers in the source nodes metadata
+    for node in response.source_nodes:
+        if "page_number" in node.metadata:
+            node.metadata["source"] = (
+                f"{node.metadata.get('source', '')} (Page {node.metadata['page_number']})"
+            )
+    # new: Format the response to include page numbers in the source list
+    formatted_response = format_response_with_sources(
+        response.response_gen, response.source_nodes
+    )
+
     return StreamingHttpResponse(
         streaming_content=htmx_stream(
             chat,
             response_message.id,
             llm,
-            response_generator=response.response_gen,
+            response_generator=formatted_response,  # new #response.response_gen,
             source_nodes=response.source_nodes,
         ),
         content_type="text/event-stream",
     )
+
+
+# new :
+def format_response_with_sources(response_gen, source_nodes):
+    """
+    Format the response to include page numbers in the source list.
+    """
+    response_str = "".join(response_gen)  # next(response_gen)
+    sources_str = "\n".join(
+        f"{node.metadata.get('source', 'Unknown source')} (Page {node.metadata.get('page_number', 'N/A')})"
+        for node in source_nodes
+    )
+    return f"{response_str}\n\nSources:\n{sources_str}"
 
 
 def error_response(chat, response_message):
