@@ -380,12 +380,14 @@ def qa_response(chat, response_message, eval=False):
 
     response = synthesizer.synthesize(query=input, nodes=source_nodes)
 
-    # new : Include page numbers in the source nodes metadata
+    # Include page numbers in the source nodes metadata only for DOCX and PDF sources
     for node in response.source_nodes:
-        if "page_number" in node.metadata:
-            node.metadata["source"] = (
-                f"{node.metadata.get('source', '')} (Page {node.metadata['page_number']})"
-            )
+        source = node.metadata.get("source", "")
+        if source.endswith(".pdf") or source.endswith(".docx"):
+            if "page_number" in node.metadata:
+                node.metadata["source"] = (
+                    f"{node.metadata.get('source', '')} (Page {node.metadata['page_number']})"
+                )
     # new: Format the response to include page numbers in the source list
     formatted_response = format_response_with_sources(
         response.response_gen, response.source_nodes
@@ -408,9 +410,14 @@ def format_response_with_sources(response_gen, source_nodes):
     """
     Format the response to include page numbers in the source list.
     """
-    response_str = "".join(response_gen)  # next(response_gen)
+    response_str = "".join(response_gen)  # Collect all parts of the original response
     sources_str = "\n".join(
-        f"{node.metadata.get('source', 'Unknown source')} (Page {node.metadata.get('page_number', 'N/A')})"
+        f"{node.metadata.get('source', 'Unknown source')}"
+        + (
+            f" (Page {node.metadata.get('page_number', 'N/A')})"
+            if node.metadata.get("source", "").endswith((".pdf", ".docx"))
+            else ""
+        )
         for node in source_nodes
     )
     return f"{response_str}\n\nSources:\n{sources_str}"

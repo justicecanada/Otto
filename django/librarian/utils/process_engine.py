@@ -180,14 +180,14 @@ def fast_pdf_to_text(content, chunk_size=768):
     page_texts = []
     for page_number in range(pdf.page_count):
         page = pdf.load_page(page_number)
-        # text += page.get_text("text")
-        page_text = page.get_text("text")
-        page_texts.append((page_text, page_number + 1))
+        text += page.get_text("text")
+        # page_text = page.get_text("text")
+        # page_texts.append((page_text, page_number + 1))
 
     pdf.close()
 
     # We don't split the text into chunks here because it's done in create_child_nodes()
-    return page_texts  # text, [text]
+    return text, [text]  # page_texts  # text, [text]
 
 
 def html_to_markdown(content, chunk_size=768, base_url=None, selector=None):
@@ -209,7 +209,7 @@ def docx_to_markdown(content, chunk_size=768):
     md, nodes = _convert_html_to_markdown(html, chunk_size)
 
     page_texts = [(node, idx + 1) for idx, node in enumerate(nodes)]
-    return md, page_texts  # return md, nodes
+    return md, nodes  # page_texts  # return md, nodes
 
 
 def pptx_to_markdown(content, chunk_size=768):
