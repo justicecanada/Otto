@@ -362,7 +362,9 @@ def qa_response(chat, response_message, eval=False):
     )
     synthesizer = llm.get_response_synthesizer(chat.options.qa_prompt_combined)
     input = response_message.parent.text
+    logger.debug(f"Input to retriever: {input}")
     source_nodes = retriever.retrieve(input)
+    logger.debug(f"Retrieved source nodes: {source_nodes}")
 
     if len(source_nodes) == 0:
         response_str = _(
@@ -415,8 +417,8 @@ def format_response_with_sources(response_gen, source_nodes):
         f"{node.metadata.get('source', 'Unknown source')}"
         + (
             f" (Page {node.metadata.get('page_number', 'N/A')})"
-            if node.metadata.get("source", "").endswith((".pdf", ".docx"))
-            else ""
+            # if node.metadata.get("source", "").endswith((".pdf", ".docx"))
+            # else ""
         )
         for node in source_nodes
     )

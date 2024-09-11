@@ -136,8 +136,8 @@ def get_process_engine_from_type(type):
 
 
 def extract_markdown(
-    content, process_engine, fast=False, base_url=None, chunk_size=768, selector=None
-):
+    content, process_engine, fast=True, base_url=None, chunk_size=768, selector=None
+):  # fast was False
     if process_engine == "PDF" and fast:
         md, md_chunks = fast_pdf_to_text(content, chunk_size)
         if len(md) < 10:
