@@ -417,11 +417,13 @@ def format_response_with_sources(response_gen, source_nodes):
         f"{node.metadata.get('source', 'Unknown source')}"
         + (
             f" (Page {node.metadata.get('page_number', 'N/A')})"
-            # if node.metadata.get("source", "").endswith((".pdf", ".docx"))
-            # else ""
+            if node.metadata.get("source", "").endswith((".pdf", ".docx"))
+            else ""
         )
         for node in source_nodes
     )
+    for node in source_nodes:
+        print("metadata-----", node.metadata)
     return f"{response_str}\n\nSources:\n{sources_str}"
 
 

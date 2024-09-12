@@ -77,9 +77,20 @@ def create_nodes(chunks, document):
 
     # Create chunk (child) nodes
     metadata["node_type"] = "chunk"
+    if document.filename.endswith((".pdf", ".docx")):  # new
+        text_strings_with_page_numbers = [
+            (chunk, i + 1) for i, chunk in enumerate(chunks)
+        ]
+    else:
+        text_strings_with_page_numbers = [(chunk, None) for chunk in chunks]
     child_nodes = create_child_nodes(
-        chunks, source_node_id=document_node.node_id, metadata=metadata
+        text_strings_with_page_numbers,
+        source_node_id=document_node.node_id,
+        metadata=metadata,
     )
+    # child_nodes = create_child_nodes(
+    #     chunks, source_node_id=document_node.node_id, metadata=metadata
+    # )
 
     # Update node properties
     new_nodes = [document_node] + child_nodes
@@ -180,14 +191,14 @@ def fast_pdf_to_text(content, chunk_size=768):
     page_texts = []
     for page_number in range(pdf.page_count):
         page = pdf.load_page(page_number)
-        text += page.get_text("text")
-        # page_text = page.get_text("text")
-        # page_texts.append((page_text, page_number + 1))
+        # text += page.get_text("text")
+        page_text = page.get_text("text")
+        page_texts.append((page_text, page_number + 1))
 
     pdf.close()
 
     # We don't split the text into chunks here because it's done in create_child_nodes()
-    return text, [text]  # page_texts  # text, [text]
+    return text, page_texts  # text, [text]
 
 
 def html_to_markdown(content, chunk_size=768, base_url=None, selector=None):
