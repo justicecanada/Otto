@@ -147,7 +147,7 @@ def get_process_engine_from_type(type):
 
 
 def extract_markdown(
-    content, process_engine, fast=True, base_url=None, chunk_size=768, selector=None
+    content, process_engine, fast=False, base_url=None, chunk_size=768, selector=None
 ):  # fast was False
     if process_engine == "PDF" and fast:
         md, md_chunks = fast_pdf_to_text(content, chunk_size)
@@ -156,9 +156,11 @@ def extract_markdown(
             # since that probably means it needs OCR
             md, md_chunks = pdf_to_markdown(content, chunk_size)
     elif process_engine == "PDF":
-        md, md_chunks = pdf_to_markdown(content, chunk_size)
+        # md, md_chunks = pdf_to_markdown(content, chunk_size)
+        md, md_chunks, page_numbers = pdf_to_markdown_by_page(content)  # new
     elif process_engine == "WORD":
         md, md_chunks = docx_to_markdown(content, chunk_size)
+        # convert the docx to pdf and run the same page number stuff (to-do)
     elif process_engine == "POWERPOINT":
         md, md_chunks = pptx_to_markdown(content, chunk_size)
     elif process_engine == "HTML":
@@ -172,7 +174,34 @@ def extract_markdown(
     if not md_chunks:
         md_chunks = [md]
 
-    return md, md_chunks
+    if page_numbers:
+        return md, md_chunks, page_numbers
+    else:
+        return md, md_chunks
+
+
+def pdf_to_markdown_by_page(content):
+    import PyPDF2
+
+    md = ""
+    md_chunks = []
+    page_numbers = []
+
+    # Open the PDF file
+    reader = PyPDF2.PdfReader(content)
+    num_pages = len(reader.pages)
+
+    # Iterate over each page
+    for page_number in range(num_pages):
+        page = reader.pages[page_number]
+        page_text = page.extract_text()
+
+        if page_text:
+            md += page_text + "\n"
+            md_chunks.append(page_text)
+            page_numbers.append(page_number + 1)  # Pages are 1-indexed
+
+    return md, md_chunks, page_numbers
 
 
 def pdf_to_markdown(content, chunk_size=768):

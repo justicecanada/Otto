@@ -362,9 +362,7 @@ def qa_response(chat, response_message, eval=False):
     )
     synthesizer = llm.get_response_synthesizer(chat.options.qa_prompt_combined)
     input = response_message.parent.text
-    logger.debug(f"Input to retriever: {input}")
     source_nodes = retriever.retrieve(input)
-    logger.debug(f"Retrieved source nodes: {source_nodes}")
 
     if len(source_nodes) == 0:
         response_str = _(
@@ -386,6 +384,9 @@ def qa_response(chat, response_message, eval=False):
     for node in response.source_nodes:
         source = node.metadata.get("source", "")
         if source.endswith(".pdf") or source.endswith(".docx"):
+            print("node metadata---", node.metadata)
+            print("source---", node.metadata.get("source"))
+            print("pg#----", node.metadata.get("page_number"))
             if "page_number" in node.metadata:
                 node.metadata["source"] = (
                     f"{node.metadata.get('source', '')} (Page {node.metadata['page_number']})"
