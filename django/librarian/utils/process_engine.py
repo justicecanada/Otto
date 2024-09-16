@@ -154,7 +154,8 @@ def extract_markdown(
         if len(md) < 10:
             # Fallback to Azure Document AI (fka Form Recognizer) if the fast method fails
             # since that probably means it needs OCR
-            md, md_chunks = pdf_to_markdown(content, chunk_size)
+            # md, md_chunks = pdf_to_markdown(content, chunk_size)
+            md, md_chunks, page_numbers = pdf_to_markdown_by_page(content)
     elif process_engine == "PDF":
         # md, md_chunks = pdf_to_markdown(content, chunk_size)
         md, md_chunks, page_numbers = pdf_to_markdown_by_page(content)  # new
