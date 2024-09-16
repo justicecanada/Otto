@@ -184,12 +184,15 @@ def extract_markdown(
 def pdf_to_markdown_by_page(content):
     import PyPDF2
 
+    if not isinstance(content, bytes):
+        raise ValueError("Content must be a bytes object")
     md = ""
     md_chunks = []
     page_numbers = []
 
     # Open the PDF file
-    reader = PyPDF2.PdfReader(content)
+    pdf_stream = io.BytesIO(content)
+    reader = PyPDF2.PdfReader(pdf_stream)
     num_pages = len(reader.pages)
 
     # Iterate over each page

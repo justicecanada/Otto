@@ -99,7 +99,7 @@ def process_document_helper(document, llm):
         extracted_metadata = extract_html_metadata(content)
         for key, value in extracted_metadata.items():
             setattr(document, key, value)
-
+    print(content_type)
     document.extracted_text, chunks = extract_markdown(
         content,
         process_engine,
