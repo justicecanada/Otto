@@ -66,7 +66,7 @@ AZURE_ACCOUNT_KEY = os.environ.get(
     "AZURE_ACCOUNT_KEY"
 )  # Azure as default storage requires this name to be AZURE_ACCOUNT_KEY
 
-# Entra
+# AC-2: Entra Integration
 ENTRA_CLIENT_ID = os.environ.get("ENTRA_CLIENT_ID")
 ENTRA_CLIENT_SECRET = os.environ.get("ENTRA_CLIENT_SECRET")
 ENTRA_AUTHORITY = os.environ.get("ENTRA_AUTHORITY")
@@ -115,7 +115,7 @@ DEBUG_PROPAGATE_EXCEPTIONS = True
 
 ALLOWED_HOSTS = [SITE_URL.hostname, "localhost", "127.0.0.1"]
 
-
+# AC-2: Entra Integration Helper App Configuration
 AUTHENTICATION_BACKENDS = [
     "azure_auth.backends.AzureBackend",
     "rules.permissions.ObjectPermissionBackend",
@@ -144,7 +144,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "autocomplete",
     "rules.apps.AutodiscoverRulesConfig",
-    "azure_auth",
+    "azure_auth",  # AC-2: Entra Integration Helper App
     # Otto apps
     "otto",
     "librarian",
@@ -164,19 +164,22 @@ MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # AC-2: Authentication, AC-14: Limited Access
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # Static files
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    # Handle login flows: redirect to login page, use Azure login, accept terms to use
+    # AC-14: Limited Access to handle login flows: redirect to login page, use Azure login, accept terms to use
     "otto.utils.auth.RedirectToLoginMiddleware",
+    # AC-2 & AC-14: Azure AD Integration to protect entire site by default
     "azure_auth.middleware.AzureMiddleware",
     "otto.utils.auth.AcceptTermsMiddleware",
+    "data_fetcher.middleware.GlobalRequestMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
+    # AU-6: Aupports structured logging, facilitating the review and analysis of audit records for inappropriate or unusual activity
     "django_structlog.middlewares.RequestMiddleware",
 ]
 
@@ -415,6 +418,7 @@ else:
 
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+DATA_UPLOAD_MAX_NUMBER_FILES = 2000
 
 # Logging
 
@@ -461,6 +465,7 @@ if ENVIRONMENT == "LOCAL":
 elif IS_RUNNING_TESTS:
     LOGGING["root"]["handlers"] = ["null"]
 
+# AU-6 & AU-7: Allows for the adjustment of log levels based on the environment and operational needs
 structlog.configure(
     processors=[
         structlog.contextvars.merge_contextvars,

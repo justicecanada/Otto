@@ -13,6 +13,8 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("search/", views.topnav_search_inner, name="search_inner"),
     path("welcome/", views.welcome, name="welcome"),
+    # AC-2: Entra Integration Helper App Configuration
+    # AC-14: Login Page Accessibility
     path("azure_auth/login", views.login, name="login"),
     path("azure_auth/", include("azure_auth.urls")),
     path("accounts/login/callback/", azure_auth_callback, name="callback"),
@@ -33,6 +35,18 @@ urlpatterns = [
     path(
         "user_management/download/", views.manage_users_download, name="download_users"
     ),
+    path("user_management/pilots/", views.manage_pilots, name="manage_pilots"),
+    path(
+        "user_management/pilots/form/",
+        views.manage_pilots_form,
+        name="manage_pilots_form",
+    ),
+    path(
+        "user_management/pilots/form/<pilot_id>/",
+        views.manage_pilots_form,
+        name="manage_pilots_form",
+    ),
+    path("user_management/costs/", views.cost_dashboard, name="cost_dashboard"),
     path("accept_terms/", views.accept_terms, name="accept_terms"),
     path("feedback/", views.message_feedback, name="user_feedback"),
     path("feedback/<message_id>/", views.message_feedback, name="user_feedback"),

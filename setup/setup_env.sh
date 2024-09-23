@@ -1,114 +1,71 @@
 #!/bin/bash
 
-ENV_FILE=".env"
-ENV_EXAMPLE_FILE=".env.example"
-
 # Ensure Azure CLI is logged in
 if ! az account show &>/dev/null; then
     echo "Not logged in to Azure. Please log in."
     az login
 fi
 
-# If SUBSCRIPTION_ID is already set, confirm if user wants to keep it
-if [ -n "$SUBSCRIPTION_ID" ]; then
-    read -p "Subscription ID is already set to $SUBSCRIPTION_ID. Do you want to keep it? (y/N): " confirm
-    if [[ $confirm =~ ^[Yy]$ ]]; then
-        echo "Keeping current subscription: $SUBSCRIPTION_ID"
-    else
-        unset SUBSCRIPTION_ID
-        echo "Subscription ID cleared. You will be prompted to enter a new one."
-    fi
-fi
+# CM-9: Prompt user to select an environment
+echo "Available environments:"
+env_files=($(ls .env* 2>/dev/null | sort))
 
-# If SUBSCRIPTION_ID is not set, prompt user to select one
-if [ -z "$SUBSCRIPTION_ID" ]; then
-
-    # List available subscriptions and prompt user to select one
-    echo "Available subscriptions:"
-    az account list --query "[].{SubscriptionId:id, Name:name}" --output table
-
-    while true; do
-        read -p "Enter the Subscription ID you want to use: " SUBSCRIPTION_ID
-        if az account show --subscription "$SUBSCRIPTION_ID" &>/dev/null; then
-            az account set --subscription "$SUBSCRIPTION_ID"
-            export SUBSCRIPTION_ID
-            echo "Subscription set to: $SUBSCRIPTION_ID"
-            break
-        else
-            echo "Invalid Subscription ID. Please try again."
-        fi
-    done
-
-fi
-
-# Check if .env.example file exists
-if [ ! -f "$ENV_EXAMPLE_FILE" ]; then
-    echo "Error: $ENV_EXAMPLE_FILE file not found."
+# Check if any .env files were found
+if [ ${#env_files[@]} -eq 0 ]; then
+    echo "No environment files found."
     exit 1
 fi
 
-# Function to extract version from file
-get_version() {
-    grep "^ENV_VERSION=" "$1" | cut -d '=' -f2 | cut -d '#' -f1 | tr -d ' '
-}
-
-# Check if .env file exists
-if [ ! -f "$ENV_FILE" ]; then
-    echo "$ENV_FILE file not found. Creating from $ENV_EXAMPLE_FILE..."
-    cp "$ENV_EXAMPLE_FILE" "$ENV_FILE"
-    echo "$ENV_FILE file created successfully."
-fi
-
-# Get versions
-example_version=$(get_version "$ENV_EXAMPLE_FILE")
-current_version=$(get_version "$ENV_FILE")
-
-# Compare versions
-if [ "$(printf '%s\n' "$current_version" "$example_version" | sort -V | tail -n1)" != "$current_version" ]; then
-    echo "Your $ENV_FILE file (version $current_version) is outdated. The latest version is $example_version."
-    read -p "Do you want to update your $ENV_FILE file? (y/N): " answer
-
-    if [[ $answer =~ ^[Yy]$ ]]; then
-        # Create backup
-        backup_file="$ENV_FILE.bk_$(date +%Y%m%d_%H%M%S)"
-        cp "$ENV_FILE" "$backup_file"
-        echo "Backup created: $backup_file"
-
-        # Create new .env file
-        cp "$ENV_EXAMPLE_FILE" "$ENV_FILE"
-        echo "$ENV_FILE file has been updated to version $example_version."
-        echo "Please review the new $ENV_FILE file and adjust any custom settings as needed."
-    else
-        echo "Update cancelled. Your $ENV_FILE file remains unchanged."
-    fi
-else
-    echo "Your $ENV_FILE file is up to date (version $current_version)."
-fi
+for i in "${!env_files[@]}"; do 
+    echo "$((i+1)). ${env_files[$i]}"
+done
 
 while true; do
-    # Display .env contents
-    echo "Current .env file contents:"
-    echo "----------------------------"
-    cat "$ENV_FILE"
-    echo "----------------------------"
-
-    # Ask user if values are correct
-    read -p "Are all the values correct? (y/N): " confirm
-
-    if [[ $confirm =~ ^[Yy]$ ]]; then
-        echo "Proceeding with current .env values."
+    read -p "Select an environment (enter the number): " selection
+    if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#env_files[@]}" ]; then
+        ENV_FILE="${env_files[$((selection-1))]}"
+        echo "Selected environment: $ENV_FILE"
         break
     else
-        # Ask the user if they want to open nano to edit the file
-        read -p "Do you want to edit the .env file in nano? (y/N): " answer
-        if [[ $answer =~ ^[Yy]$ ]]; then
-            nano "$ENV_FILE"
-        else
-            echo "Please update the .env file with the correct values."
-            exit 1
-        fi
+        echo "Invalid selection. Please choose a number from the list above."
     fi
 done
+
+# List available subscriptions and prompt user to select one
+echo "Available subscriptions:"
+az account list --query "[].{SubscriptionId:id, Name:name}" --output table
+
+while true; do
+    read -p "Enter the Subscription ID you want to use: " SUBSCRIPTION_ID
+    if az account show --subscription "$SUBSCRIPTION_ID" &>/dev/null; then
+        az account set --subscription "$SUBSCRIPTION_ID"
+        export SUBSCRIPTION_ID
+        echo "Subscription set to: $SUBSCRIPTION_ID"
+        break
+    else
+        echo "Invalid Subscription ID. Please try again."
+    fi
+done
+
+# Display selected environment file contents
+echo "Selected environment file contents:"
+echo "----------------------------"
+cat "$ENV_FILE"
+echo "----------------------------"
+
+# Ask user if values are correct
+read -p "Are all the values correct? (y/N): " confirm
+
+if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    # Ask the user if they want to open nano to edit the file
+    read -p "Do you want to edit the $ENV_FILE file in nano? (y/N): " edit_confirm
+    if [[ $edit_confirm =~ ^[Yy]$ ]]; then
+        nano "$ENV_FILE"
+    else
+        echo "Please update the $ENV_FILE file with the correct values and run the script again."
+        exit 1
+    fi
+fi
 
 # Unset all environment variables
 unset $(grep -v '^#' "$ENV_FILE" | sed -E 's/(.*)=.*/\1/' | xargs)
@@ -116,7 +73,9 @@ unset SITE_URL
 unset DNS_LABEL
 
 # Load the environment variables from file
-source .env
+source "$ENV_FILE"
+
+echo "Environment variables loaded from $ENV_FILE"
 
 # Validation and URL setting
 if [ -n "$SITE_URL" ] && [ -n "$DNS_LABEL" ]; then
@@ -142,8 +101,8 @@ export HOST_NAME=${SITE_URL#https://}
 
 export ENV_VERSION
 export INTENDED_USE
-export ADMIN_GROUP_NAME
-export ACR_PUBLISHERS_GROUP_NAME
+export ADMIN_GROUP_NAMES
+export ACR_PUBLISHERS_GROUP_NAMES
 export ENTRA_CLIENT_NAME
 export ORGANIZATION
 
