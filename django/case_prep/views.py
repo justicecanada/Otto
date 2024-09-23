@@ -64,7 +64,7 @@ def create_session(request):
     # return redirect("case_prep:sessions_page", session_id=session.id)
 
 
-def sessions_page(request, file_number):
+def sessions_page(request, file_number):  # , file_number):
     # file_number = request.GET.get("fileNumber")
     access_key = AccessKey(request.user)
     sessions = Session.objects.all(access_key=access_key)
@@ -859,3 +859,12 @@ def get_selected_docs(request):
     except Exception as e:
         print(f"Error in get_selected_docs: {e}")
         return None
+
+
+@require_http_methods(["POST"])
+def update_file_number(request):
+    file_number = request.POST.get("file_number")
+    # Perform any necessary validation and update logic here
+    # For example, you might want to save the file_number to the session or database
+    request.session["file_number"] = file_number  # Example of saving to session
+    return redirect("case_prep:session_detail", file_number=file_number)

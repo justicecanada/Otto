@@ -12,7 +12,8 @@
     <a href="{% url 'case_prep:index' %}">{% trans "Case prep assistant" %}</a>
   </li>
   <li class="breadcrumb-item active" aria-current="page">
-    <a href="{% url 'case_prep:sessions_page' %}?fileNumber={{ fileNumber }}">{% trans "sessions" %}</a>
+    <a href="  {% url 'case_prep:sessions_page' file_number=file_number %}">{% trans "sessions" %}</a>
+    {# {% url 'case_prep:sessions_page' %}?fileNumber={{ fileNumber }} #}
   </li>
 {% endblock %}
 

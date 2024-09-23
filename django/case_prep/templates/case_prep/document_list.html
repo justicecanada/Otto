@@ -127,7 +127,10 @@
                   <option value="french">{% trans "French" %}</option>
                 </select>
               </div>
-              <button type="button" class="btn btn-primary mb-3" id="generateSummaryButton">{% trans "Generate" %}</button>
+              <button type="button"
+                      class="btn btn-primary mb-3"
+                      id="generateSummaryButton"
+                      data-document-id="{{ document.id }}">{% trans "Generate" %}</button>
             </div>
             <div class="mb-3 d-flex">
               <textarea class="form-control" id="summaryOutput" rows="4"></textarea>

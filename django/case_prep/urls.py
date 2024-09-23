@@ -63,7 +63,11 @@ urlpatterns = [
         views.preview_document,
         name="preview_document",
     ),
-    path("sessions_page/", views.sessions_page, name="sessions_page"),
+    path("sessions_page/<str:file_number>/", views.sessions_page, name="sessions_page"),
+    path(
+        "session_detail/<str:file_number>/", views.sessions_page, name="sessions_page"
+    ),
     path("sessions/<str:file_number>/", views.sessions_page, name="sessions_page"),
     path("upload/", views.upload_files, name="upload"),
+    path("update_file_number/", views.update_file_number, name="update_file_number"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

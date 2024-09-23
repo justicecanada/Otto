@@ -334,50 +334,50 @@ $(document).on('click', '[data-bs-target="#summarizationModal"]', function () {
 });
 
 //$(document).on('click', '#summarizeForm button[type="submit"]', function (e) {
-$(document).on('submit', '#summarizeForm', function (e) {
-  e.preventDefault();
-  const form = $('#summarizeForm');
-  const documentId = $('#summarizationModal').data('document-id');
-  //const selectedDocumentIds = $('#summarizationModal').data('document-ids');
+// $(document).on('submit', '#summarizeForm', function (e) {
+//   e.preventDefault();
+//   const form = $('#summarizeForm');
+//   const documentId = $('#summarizationModal').data('document-id');
+//   //const selectedDocumentIds = $('#summarizationModal').data('document-ids');
 
-  const requestData = {
-    document_id: documentId,
-    length: form.find('select[name="length"]').val(),
-    target_language: form.find('select[name="target_language"]').val()
-  };
+//   const requestData = {
+//     document_id: documentId,
+//     length: form.find('select[name="length"]').val(),
+//     target_language: form.find('select[name="target_language"]').val()
+//   };
 
-  console.log('Sending request data:', requestData);  // Add this line for debugging
+//   console.log('Sending request data:', requestData);  // Add this line for debugging
 
-  $.ajax({
-    url: '/case_prep/summarize_feature/', //form.attr('action'), //
-    type: 'POST',
-    headers: {
-      'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
-      'Content-Type': 'application/json'
-    },
-    data: JSON.stringify(requestData),
-    beforeSend: function () {
-      $('#summaryResult').html('Summary loading...');
-      $('#generateButton').hide();
-      $('#loadingButton').show();
-    },
-    success: function (data) {
-      console.log('Summarization successful:', data);
-      $('#summaryResult').html(data.summarized_text);
-      $('#loadingButton').hide();
-      $('#generateButton').show();
-      location.reload();
-    },
-    error: function (error) {
-      console.error('Summarization error:', error);
-      $('#loadingButton').hide();
-      $('#generateButton').show();
-    }
-  });
-});
-$(document).on('click', '#closeButton', function () {
-  console.clear();
-});
+//   $.ajax({
+//     url: '/case_prep/summarize_feature/', //form.attr('action'), //
+//     type: 'POST',
+//     headers: {
+//       'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+//       'Content-Type': 'application/json'
+//     },
+//     data: JSON.stringify(requestData),
+//     beforeSend: function () {
+//       $('#summaryResult').html('Summary loading...');
+//       $('#generateButton').hide();
+//       $('#loadingButton').show();
+//     },
+//     success: function (data) {
+//       console.log('Summarization successful:', data);
+//       $('#summaryResult').html(data.summarized_text);
+//       $('#loadingButton').hide();
+//       $('#generateButton').show();
+//       location.reload();
+//     },
+//     error: function (error) {
+//       console.error('Summarization error:', error);
+//       $('#loadingButton').hide();
+//       $('#generateButton').show();
+//     }
+//   });
+// });
+// $(document).on('click', '#closeButton', function () {
+//   console.clear();
+// });
 
 
 $(document).on('click', '[data-bs-target="#translationModal"]', function () {
@@ -475,5 +475,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
     documentNameInput.value = documentName;
     documentDateInput.value = documentDate;
+  });
+});
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('generateSummaryButton').addEventListener('click', function () {
+    const documentId = this.getAttribute('data-document-id');
+    const length = document.getElementById('summaryLength').value;
+    const targetLang = document.getElementById('summaryLanguage').value;
+
+    fetch("{% url 'case_prep:summarize_feature' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        document_id: documentId,
+        length: length,
+        target_language: targetLang
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.summarized_text) {
+          document.getElementById('summaryOutput').value = data.summarized_text;
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An unexpected error occurred.');
+      });
   });
 });

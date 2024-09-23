@@ -12,7 +12,7 @@
     <a href="{% url 'case_prep:index' %}">{% trans "Case prep assistant" %}</a>
   </li>
   <li class="breadcrumb-item active" aria-current="page">
-    <a href="{% url 'case_prep:sessions_page' %}">{% trans "sessions" %}</a>
+    <a href="{% url 'case_prep:sessions_page' file_number=file_number %}">{% trans "sessions" %}</a>
   </li>
   <li class="breadcrumb-item">{{ session.name }}</li>
 {% endblock %}
@@ -32,15 +32,18 @@
  
   <div class="container mt-4">
     <div class="mb-4">
-      <label for="fileNumber" class="form-label">
-        <strong>{% trans "Court File Number" %}:</strong>
-      </label>
-      <input type="text"
-             id="fileNumber"
-             name="fileNumber"
-             class="form-control"
-             value="{{ file_number }}"
-             readonly>
+      <form method="post" action="{% url 'case_prep:update_file_number' %}">
+        {% csrf_token %}
+        <label for="file_number">
+          <strong>{% trans "Court File Number" %}:</strong>
+        </label>
+        <input type="text"
+               id="file_number"
+               name="file_number"
+               value="{{ file_number }}"
+               class="form-control">
+        <button type="submit" class="btn btn-primary mt-2">{% trans "Update" %}</button>
+      </form>
     </div>
     <div class="mb-4">
       <label for="styleOfCause" class="form-label">
@@ -137,7 +140,9 @@
           class="btn btn-danger mt-2"
           data-session-id="{{ session.id }}"
           data-delete-url="{% url 'case_prep:delete_session' session.id %}"
-          data-delete-redirect-url="{% url 'case_prep:sessions_page' %}">{% trans "Delete" %}</button>
+          data-delete-redirect-url="{% url 'case_prep:sessions_page' file_number=file_number %}">
+    {% trans "Delete" %}
+  </button>
 </div>
  
 <!-- Q&A Research Modal -->
