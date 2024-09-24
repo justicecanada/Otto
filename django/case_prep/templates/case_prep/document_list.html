@@ -151,12 +151,12 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
-          <button type="button" class="btn btn-primary" id="downloadButton">{% trans "Download" %}</button>
           <!-- Save Button -->
           <button id="saveButton"
                   class="btn btn-success mt-2"
                   data-save-url="{% url 'case_prep:save_changes' %}">{% trans "Save Changes" %}</button>
+          <button type="button" class="btn btn-primary" id="downloadButton">{% trans "Download" %}</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
  
  
  
