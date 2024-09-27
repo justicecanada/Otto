@@ -56,6 +56,8 @@ def process_document(document_id, language=None):
 
 
 def process_document_helper(document, llm):
+    from django.utils.translation import gettext as _
+
     url = document.url
     file = document.file
     if not (url or file):
@@ -111,7 +113,29 @@ def process_document_helper(document, llm):
         selector=document.selector,
     )
     num_chunks = len(chunks)
+    if num_chunks > 2:
+        print("length of chunks----------------", num_chunks)
     document.num_chunks = num_chunks
+    # Extract and save page numbers
+    page_numbers_list = []
+
+    for chnk, page_numbers in chunks:
+        page_numbers_list.extend(page_numbers)
+
+    # for chunk in chunks:
+    #     print("Chunk:", chunk)  # Print each chunk for debugging
+    #     if len(chunk) == 2:
+    #         chnk, page_numbers = chunk
+    #         page_numbers_list.extend(page_numbers)
+    #     else:
+    #         # Handle the case where chunk does not have exactly 2 elements
+    #         raise ValueError(
+    #             "Expected chunk to have exactly 2 elements, got {}".format(len(chunk))
+    #         )
+
+    # Assuming document has a field `page_numbers` to store the page numbers
+    document.page_numbers = page_numbers_list
+    print("page num list: ", page_numbers_list)
     document.save()
     if current_task:
         current_task.update_state(
