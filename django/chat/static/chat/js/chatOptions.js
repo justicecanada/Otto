@@ -2,26 +2,26 @@
 // Chat options: handle library / data source etc. selection changes
 
 function updateLibraryModalButton() {
-  const selectElement = document.getElementById('id_qa_library');
+  const selectElement = document.getElementById("id_qa_library");
   const selectedLibraryId = selectElement.value;
-  const buttonElement = document.getElementById('editLibrariesButton');
-  buttonElement.setAttribute('hx-get', `/librarian/modal/library/${selectedLibraryId}/edit/`);
+  const buttonElement = document.getElementById("editLibrariesButton");
+  buttonElement.setAttribute("hx-get", `/librarian/modal/library/${selectedLibraryId}/edit/`);
   htmx.process(buttonElement);
 }
 
 function updateQaSourceForms() {
-  const scope = document.getElementById('id_qa_scope').value;
-  const dataSources = document.getElementById('qa_data_sources_autocomplete');
-  const documents = document.getElementById('qa_documents_autocomplete');
-  if (scope === 'data_sources') {
-    dataSources.classList.remove('d-none');
-    documents.classList.add('d-none');
-  } else if (scope === 'documents') {
-    dataSources.classList.add('d-none');
-    documents.classList.remove('d-none');
+  const scope = document.getElementById("id_qa_scope").value;
+  const dataSources = document.getElementById("qa_data_sources_autocomplete");
+  const documents = document.getElementById("qa_documents_autocomplete");
+  if (scope === "data_sources") {
+    dataSources.classList.remove("d-none");
+    documents.classList.add("d-none");
+  } else if (scope === "documents") {
+    dataSources.classList.add("d-none");
+    documents.classList.remove("d-none");
   } else {
-    dataSources.classList.add('d-none');
-    documents.classList.add('d-none');
+    dataSources.classList.add("d-none");
+    documents.classList.add("d-none");
   }
 }
 
@@ -32,22 +32,22 @@ function updateAutocompleteLibraryid(element_id) {
   const input_element = document.getElementById(element_id);
 
   // hx-vals attribute already has a value, e.g.
-  // js:{name: 'qa_data_sources', component_id: 'id_qa_data_sources', search: document.getElementById('id_qa_data_sources__textinput').value}
-  let hx_vals = input_element.getAttribute('hx-vals');
+  // js:{name: "qa_data_sources", component_id: "id_qa_data_sources", search: document.getElementById("id_qa_data_sources__textinput").value}
+  let hx_vals = input_element.getAttribute("hx-vals");
   // Remove the last character, which is a closing brace
   hx_vals = hx_vals.slice(0, -1);
   // Now add the library_id key to the hx-vals string
   hx_vals += ", library_id: document.getElementById('id_qa_library').value, chat_id: chat_id}";
-  input_element.setAttribute('hx-vals', hx_vals);
+  input_element.setAttribute("hx-vals", hx_vals);
 }
 
 // After toggling elements in the autocomplete widget, the input element is swapped out.
 // Monitor the related input elements for hx-swaps and then update the library ID again.
 document.addEventListener("htmx:afterSettle", function (event) {
   if (event.target.id == "id_qa_data_sources" || event.target.id == "id_qa_documents") {
-    updateAutocompleteLibraryid('id_qa_data_sources__textinput');
-    updateAutocompleteLibraryid('id_qa_documents__textinput');
-    // Unlike the other widgets, the autocomplete doesn't have a change event to trigger
+    updateAutocompleteLibraryid("id_qa_data_sources__textinput");
+    updateAutocompleteLibraryid("id_qa_documents__textinput");
+    // Unlike the other widgets, the autocomplete doesn"t have a change event to trigger
     // the ChatOption form save, but we can trigger it now
     triggerOptionSave();
   }
@@ -59,30 +59,34 @@ function clearAutocomplete(field_name) {
   const chips = document.querySelectorAll(`#id_${field_name}_ac_container li.chip`);
   const info = document.querySelector(`#id_${field_name}__info`);
   const sr_desc = document.querySelector(`#id_${field_name}__sr_description`);
-  input_wrapper.innerHTML = '';
-  result_items.innerHTML = '';
+  input_wrapper.innerHTML = "";
+  result_items.innerHTML = "";
   chips.forEach(chip => chip.remove());
-  info.innerHTML = '';
-  sr_desc.innerHTML = '';
+  info.innerHTML = "";
+  sr_desc.innerHTML = "";
 }
 
 function resetQaAutocompletes() {
-  const mode = document.getElementById('id_qa_mode');
-  mode.value = 'rag';
+  const mode = document.getElementById("id_qa_mode");
+  mode.value = "rag";
   limitScopeSelect();
   updateQaSourceForms();
-  clearAutocomplete('qa_data_sources');
-  clearAutocomplete('qa_documents');
+  clearAutocomplete("qa_data_sources");
+  clearAutocomplete("qa_documents");
 }
 
 function limitScopeSelect() {
-  const scope = document.getElementById('id_qa_scope');
-  let search_mode = document.getElementById('id_qa_mode').value;
+  const scope = document.getElementById("id_qa_scope");
+  const hiddenScope = document.getElementById("hidden_qa_scope");
+  let search_mode = document.getElementById("id_qa_mode").value;
+
   if (search_mode === "rag") {
-    scope.value = 'all';
-    scope.removeAttribute('disabled');
+    scope.value = "all";
+    hiddenScope.value = "all";
+    scope.removeAttribute("disabled");
   } else {
     scope.value = "documents";
-    scope.setAttribute('disabled', 'disabled');
+    hiddenScope.value = "documents";
+    scope.setAttribute("disabled", "disabled");
   }
 }
